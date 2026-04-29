@@ -1,0 +1,38 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const sections = (await getCollection('sections')).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+const pages = await getCollection('pages', ({ data }) => !data.draft);
+
+const countBySection = new Map<string, number>();
+for (const p of pages) {
+  const ref = p.data.section as { slug?: string; id?: string };
+  const key = ref.slug ?? ref.id ?? '';
+  countBySection.set(key, (countBySection.get(key) ?? 0) + 1);
+}
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<BaseLayout title="Explainer — interactive derivations of mathematical ideas">
+  <section class="cover">
+    <h1>Explainer</h1>
+    <p>
+      Interactive, intuition-first derivations of mathematical and statistical ideas —
+      built one careful argument at a time.
+    </p>
+  </section>
+
+  <div class="section-grid">
+    {sections.map((s) => (
+      <a class="section-card" href={`${base}/sections/${s.slug}`}>
+        <span class="count">
+          {countBySection.get(s.slug) ?? 0} {(countBySection.get(s.slug) ?? 0) === 1 ? 'piece' : 'pieces'}
+        </span>
+        <h2>{s.data.title}</h2>
+        <p>{s.data.blurb}</p>
+      </a>
+    ))}
+  </div>
+</BaseLayout>

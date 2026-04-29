@@ -1,0 +1,24 @@
+---
+import { getCollection, getEntry } from 'astro:content';
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+
+export async function getStaticPaths() {
+  const pages = await getCollection('pages', ({ data }) => !data.draft);
+  return pages.map((p) => ({ params: { slug: p.slug }, props: { entry: p } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+
+const sectionRef = entry.data.section;
+const sectionEntry = await getEntry(sectionRef);
+const sectionId = sectionRef.id;
+const sectionTitle = sectionEntry?.data.title ?? sectionId;
+---
+<ArticleLayout
+  frontmatter={entry.data}
+  sectionId={sectionId}
+  sectionTitle={sectionTitle}
+>
+  <Content />
+</ArticleLayout>

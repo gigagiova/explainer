@@ -1,0 +1,190 @@
+---
+title: "Sewall Wright and the Geometry of Inbreeding"
+subtitle: "How a young USDA biologist turned a tangle of guinea-pig pedigrees into one of the cleanest formulas in genetics — and invented path analysis along the way."
+section: genetics
+author: "Editor"
+pubDate: 2026-04-29
+order: 1
+summary: "An intuition-first walk through Wright's inbreeding coefficient F and the method of path coefficients that produced it."
+tags: ["population genetics", "path analysis", "history of statistics"]
+---
+
+import PedigreeF from '../../components/PedigreeF.tsx';
+
+In 1915, Sewall Wright sat in a US Department of Agriculture office in
+Beltsville, Maryland, with a stack of guinea-pig pedigrees in front of
+him. The herd had been inbred for ten generations to study the effects
+of close mating on body weight, vigor, and coat color. Everyone could
+see the animals were getting smaller and stranger. Nobody had a clean
+way to *measure how inbred they were*.
+
+The problem looks innocent. Pick any animal in the pedigree. Its mother
+and father might be siblings, or half-siblings, or cousins — or, more
+often, some intricate mixture, because the herd had been mating within
+itself for years. How do you collapse that whole tangled history into a
+single number?
+
+Wright's answer, published in 1921 and 1922, was the **inbreeding
+coefficient** $F$, together with a graphical method — **path analysis**
+— invented expressly to compute it. The two ideas are inseparable: $F$
+is *defined* by the paths you can trace in a pedigree.
+
+## What we want $F$ to mean
+
+Before deriving anything, fix the picture. An animal has two copies of
+each gene, one from each parent. Call those two copies *identical by
+descent* (IBD) when they are both physical replicas of a single copy
+present in some shared ancestor.
+
+<div className="callout">
+**Definition.** The inbreeding coefficient $F$ of an individual is the
+probability that its two gene copies, at a randomly chosen locus, are
+identical by descent.
+</div>
+
+A wholly outbred animal has $F = 0$: the maternal and paternal copies
+trace back to unrelated ancestors. An animal whose parents are full
+siblings has $F = 1/4$. An animal that is the result of self-fertilization
+of an outbred parent has $F = 1/2$. After many generations of brother–
+sister mating, $F$ approaches $1$, and the animal is essentially
+homozygous everywhere.
+
+The number is doing real work. It tells you how much of the genome has
+collapsed onto identical pairs of copies — and so, indirectly, how
+much hidden recessive variation has been exposed.
+
+## The single-ancestor case, by sheer counting
+
+Start with the simplest non-trivial pedigree. Two parents $X$ and $Y$
+share *exactly one* common ancestor $A$. Mate $X$ and $Y$ and ask: with
+what probability are the two gene copies in their offspring $O$
+identical by descent?
+
+Pick any one gene copy in $A$. Trace its journey down to $O$.
+
+1. With probability $1/2$, $A$ passes that copy (rather than the
+   other) to its child on the path toward $X$.
+2. The child passes it on, again with probability $1/2$, to *its* child.
+3. ...and so on, until the gene reaches $X$, then $X$ passes it on to
+   $O$ — also with probability $1/2$.
+
+If the path from $A$ to $X$ has $n_1$ links (parent–child steps), the
+probability that a particular gene copy in $A$ ends up in $O$ via this
+side is $(1/2)^{n_1 + 1}$ — one factor of $1/2$ per link, plus one for
+the final transmission from $X$ to $O$.
+
+Symmetrically, the probability that the *same* copy in $A$ ends up in
+$O$ via the other side is $(1/2)^{n_2 + 1}$.
+
+The two sides are independent transmissions, so the probability that
+both gene copies in $O$ trace back to *that one specific copy* in $A$ is
+
+$$
+\left(\tfrac{1}{2}\right)^{n_1 + 1} \left(\tfrac{1}{2}\right)^{n_2 + 1}
+= \left(\tfrac{1}{2}\right)^{n_1 + n_2 + 2}.
+$$
+
+But $A$ has *two* copies of the gene, and either of them could be the
+shared one. Doubling:
+
+$$
+\Pr(\text{IBD via this specific copy of } A) \times 2
+= \left(\tfrac{1}{2}\right)^{n_1 + n_2 + 1}.
+$$
+
+That doubling is the entire reason a $1/2$ — not a $1/4$ — appears at
+the front of Wright's formula. Two parents only need to share *one
+copy* of $A$, and there are two ways that can happen.
+
+## A correction: $A$ may itself be inbred
+
+So far we have assumed the two copies in $A$ are different. But what if
+$A$ is itself inbred? Then there is an extra probability $f_A$ that the
+two copies inside $A$ are *already* identical by descent — in which
+case the doubling above slightly overcounts (the two copies are really
+one). Working through the bookkeeping gives Wright's correction:
+
+$$
+F_O \;=\; \left(\tfrac{1}{2}\right)^{n_1 + n_2 + 1} (1 + f_A).
+$$
+
+## Try it
+
+Drag the sliders. Watch how quickly $F$ collapses as you push the
+common ancestor further back, and how $f_A$ scales the result.
+
+<PedigreeF client:load />
+
+A useful gut-check: full siblings have $n_1 = n_2 = 1$, so
+
+$$
+F = \left(\tfrac{1}{2}\right)^{1 + 1 + 1} (1 + 0) = \tfrac{1}{8}
+$$
+
+— *per common ancestor*. Full sibs share both parents, so we add two
+copies of this contribution and recover the famous $F = 1/4$.
+
+## Many ancestors: just add the paths
+
+The leap that turned this trick into a method is small but decisive.
+If $X$ and $Y$ share *several* common ancestors $A_1, A_2, \dots$, each
+one contributes its own term — provided you only count paths that pass
+through a single common ancestor and that don't reuse any individual.
+Wright's general formula reads
+
+$$
+F_O \;=\; \sum_{k} \left(\tfrac{1}{2}\right)^{n_{1k} + n_{2k} + 1}
+                    (1 + f_{A_k}),
+$$
+
+where the sum runs over all valid paths and $n_{1k}, n_{2k}$ are the
+two leg-lengths of the $k$-th path. The whole inbreeding question
+reduces to *enumerating loops in a pedigree* and reading off two
+numbers per loop.
+
+## The leap: path coefficients in general
+
+Wright noticed, between 1918 and 1921, that the same accounting works
+far beyond inbreeding. Replace "transmission of a gene copy" with
+"propagation of a standardized causal effect", and $1/2$ with an
+arbitrary *path coefficient* on each arrow, and the formula
+$\sum (\text{product of path coefficients along a path})$ becomes a
+*general* recipe for decomposing a correlation into the contributions of
+the causal channels that produce it.
+
+That is **path analysis**. It is the ancestor of structural equation
+modeling, of much of modern causal inference, and — through Wright's
+own students — of a sizable portion of twentieth-century biometry.
+The whole framework was bootstrapped by trying to count gene copies in
+a guinea-pig herd.
+
+## Why this argument is satisfying
+
+Three features make Wright's derivation feel almost inevitable once you
+see it:
+
+- **The picture is the proof.** A path from $A$ down to $O$ is both a
+  visual object and a sequence of independent $1/2$'s. The diagram
+  *is* the multiplication.
+- **The doubling is structural, not algebraic.** The factor of $1/2$
+  out front, which looks mysterious in formula form, is just "either
+  copy of $A$ might be the shared one."
+- **The correction $(1 + f_A)$ encodes its own intuition.** If $A$ is
+  itself inbred, its two copies are partly the same gene, so paths
+  that we counted as distinct partially coincide; the inflation
+  factor is exactly the probability that they do.
+
+Once those three ideas are in your hands, the general path-analysis
+formula stops looking like an identity to memorize and starts looking
+like the only sensible bookkeeping.
+
+---
+
+### Further reading
+
+- Wright, S. (1921). *Systems of mating. I. The biometric relations
+  between parent and offspring.* Genetics 6: 111–123.
+- Wright, S. (1922). *Coefficients of inbreeding and relationship.*
+  American Naturalist 56: 330–338.
+- Wright, S. (1934). *The method of path coefficients.* Annals of
+  Mathematical Statistics 5: 161–215.
