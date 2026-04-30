@@ -47,7 +47,7 @@ pnpm preview
 
 ## Deploy
 
-GitHub Actions builds and publishes on every push to `main` via
+GitHub Actions builds and publishes on every push to `master` via
 `.github/workflows/deploy.yml`. Configure the repository's Pages source
 to "GitHub Actions" once.
 
