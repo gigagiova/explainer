@@ -47,6 +47,37 @@ function mapY(v: number): number {
   return SCATTER_BOTTOM - ((v + RANGE) / (2 * RANGE)) * SCATTER_H;
 }
 
+/* ----------------------------------------------------------------
+   3D scene constants and projection helpers. Shares the dataset and
+   the M slider with the 2D view; differs in geometry, axes, and the
+   shape of the slice plane.
+   ---------------------------------------------------------------- */
+
+const W3 = 480;
+const H3 = 460;
+const C3X = W3 / 2;
+const C3Y = H3 / 2 + 6;
+const SCALE3 = 50;
+
+function project3D(x: number, m: number, y: number, yaw: number, pitch: number): [number, number, number] {
+  const cy = Math.cos(yaw), sy = Math.sin(yaw);
+  const x1 = x * cy + y * sy;
+  const z1 = -x * sy + y * cy;
+  const cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const m2 = m * cp - z1 * sp;
+  const z2 = m * sp + z1 * cp;
+  return [x1, m2, z2];
+}
+
+function toScreen3D(x: number, m: number, y: number, yaw: number, pitch: number) {
+  const [x1, m1, z1] = project3D(x, m, y, yaw, pitch);
+  return {
+    sx: C3X + x1 * SCALE3,
+    sy: C3Y - m1 * SCALE3,
+    depth: z1,
+  };
+}
+
 function boxMuller(): [number, number] {
   const u1 = Math.max(Math.random(), 1e-10);
   const u2 = Math.random();
@@ -167,6 +198,9 @@ const M_DENSITY_PATH = (() => {
 
 export default function ChainSliceScatter() {
   const [m0, setM0] = useState(0);
+  const [view, setView] = useState<'2d' | '3d'>('2d');
+  const [yaw, setYaw] = useState(-0.55);
+  const [pitch, setPitch] = useState(0.35);
 
   const { slice, rest } = useMemo(() => {
     const s: Sample[] = [];
@@ -202,6 +236,7 @@ export default function ChainSliceScatter() {
       borderRadius: 4,
     }}>
       <div style={{
+        position: 'relative',
         textAlign: 'center',
         fontFamily: 'var(--font-sans)',
         fontSize: '.78rem',
@@ -210,7 +245,20 @@ export default function ChainSliceScatter() {
         color: 'var(--ink-muted)',
         fontWeight: 600,
         marginBottom: '.4rem',
-      }}>practice → skill → score</div>
+      }}>
+        practice → skill → score
+        <div style={{
+          position: 'absolute',
+          right: 0,
+          top: '-2px',
+          display: 'flex',
+          gap: '2px',
+          fontSize: '.7rem',
+        }}>
+          <ViewToggleBtn label="2D" active={view === '2d'} onClick={() => setView('2d')} />
+          <ViewToggleBtn label="3D" active={view === '3d'} onClick={() => setView('3d')} />
+        </div>
+      </div>
 
       <p style={{
         fontFamily: 'var(--font-sans)',
@@ -233,6 +281,7 @@ export default function ChainSliceScatter() {
         practice and score collapses.
       </p>
 
+      {view === '2d' && (
       <svg
         viewBox={`0 0 ${W} ${TOTAL_H}`}
         style={{ width: '100%', maxWidth: 560, display: 'block', margin: '0 auto' }}
@@ -376,6 +425,21 @@ export default function ChainSliceScatter() {
           </g>
         ))}
       </svg>
+      )}
+
+      {view === '3d' && (
+        <ThreeDView
+          slice={slice}
+          rest={rest}
+          m0={m0}
+          yaw={yaw}
+          pitch={pitch}
+          fullStats={fullStats}
+          sliceStats={sliceStats}
+          fullSlope={fullSlope ?? 0}
+          sliceSlope={sliceSlope ?? 0}
+        />
+      )}
 
       <div style={{
         margin: '1.2rem auto .4rem',
@@ -463,6 +527,21 @@ export default function ChainSliceScatter() {
           style={{ display: 'block', width: '100%', marginTop: '.3rem', accentColor: 'var(--accent)' }}
         />
       </label>
+
+      {view === '3d' && (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '.4rem 1rem',
+          margin: '.6rem auto 0',
+          maxWidth: 460,
+        }}>
+          <RotationSlider label="yaw" value={yaw} min={-Math.PI} max={Math.PI}
+            onChange={setYaw} fmt={(v) => `${Math.round(v * 180 / Math.PI)}°`} />
+          <RotationSlider label="pitch" value={pitch} min={-Math.PI / 2 + 0.1} max={Math.PI / 2 - 0.1}
+            onChange={setPitch} fmt={(v) => `${Math.round(v * 180 / Math.PI)}°`} />
+        </div>
+      )}
 
       <figcaption style={{
         fontFamily: 'var(--font-sans)',
@@ -607,5 +686,166 @@ function PredVsData({ label, predHtml, value, n, accent = false }: {
         <span style={{ color: 'var(--ink-faint)' }}>(n = {n})</span>
       </div>
     </div>
+  );
+}
+
+function ViewToggleBtn({ label, active, onClick }: {
+  label: string; active: boolean; onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        fontFamily: 'inherit',
+        fontSize: 'inherit',
+        letterSpacing: 'inherit',
+        textTransform: 'inherit',
+        padding: '2px 8px',
+        border: '1px solid ' + (active ? 'var(--ink)' : 'var(--rule)'),
+        background: active ? 'var(--ink)' : 'transparent',
+        color: active ? 'white' : 'var(--ink-muted)',
+        borderRadius: 3,
+        cursor: 'pointer',
+        fontWeight: active ? 600 : 500,
+      }}
+    >{label}</button>
+  );
+}
+
+function RotationSlider({
+  label, value, min, max, onChange, fmt,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (v: number) => void;
+  fmt: (v: number) => string;
+}) {
+  return (
+    <label style={{
+      display: 'block',
+      fontFamily: 'var(--font-sans)',
+      fontSize: '.78rem',
+      textTransform: 'uppercase',
+      letterSpacing: '.06em',
+      color: 'var(--ink-muted)',
+    }}>
+      {label}{' '}
+      <strong style={{
+        color: 'var(--ink)', fontFamily: 'var(--font-mono)', fontSize: '.85rem', textTransform: 'none',
+      }}>{fmt(value)}</strong>
+      <input
+        type="range" min={min} max={max} step={0.02}
+        value={value}
+        onChange={(e) => onChange(parseFloat((e.target as HTMLInputElement).value))}
+        style={{ display: 'block', width: '100%', marginTop: '.3rem', accentColor: 'var(--accent)' }}
+      />
+    </label>
+  );
+}
+
+function ThreeDView({
+  slice, rest, m0, yaw, pitch, fullStats, sliceStats, fullSlope, sliceSlope,
+}: {
+  slice: Sample[];
+  rest: Sample[];
+  m0: number;
+  yaw: number;
+  pitch: number;
+  fullStats: Stats;
+  sliceStats: Stats;
+  fullSlope: number;
+  sliceSlope: number;
+}) {
+  /* Project everything once. Sort dots back-to-front so near dots
+     overlay far ones; depth shading reinforces the perception. */
+  const projectedRest = rest.map((s) => ({
+    ...toScreen3D(s.x, s.m, s.y, yaw, pitch),
+    inSlice: false as const,
+  }));
+  const projectedSlice = slice.map((s) => ({
+    ...toScreen3D(s.x, s.m, s.y, yaw, pitch),
+    inSlice: true as const,
+  }));
+  const all = [...projectedRest, ...projectedSlice].sort((a, b) => b.depth - a.depth);
+
+  const axisX = toScreen3D(RANGE, 0, 0, yaw, pitch);
+  const axisXNeg = toScreen3D(-RANGE, 0, 0, yaw, pitch);
+  const axisM = toScreen3D(0, RANGE, 0, yaw, pitch);
+  const axisMNeg = toScreen3D(0, -RANGE, 0, yaw, pitch);
+  const axisY = toScreen3D(0, 0, RANGE, yaw, pitch);
+  const axisYNeg = toScreen3D(0, 0, -RANGE, yaw, pitch);
+
+  const sliceCorners = [
+    toScreen3D(-RANGE, m0, -RANGE, yaw, pitch),
+    toScreen3D( RANGE, m0, -RANGE, yaw, pitch),
+    toScreen3D( RANGE, m0,  RANGE, yaw, pitch),
+    toScreen3D(-RANGE, m0,  RANGE, yaw, pitch),
+  ];
+
+  /* Full-pool regression line at M=0; slice regression line at M=m0. */
+  const fullY1 = fullSlope * (-RANGE - fullStats.mx) + fullStats.my;
+  const fullY2 = fullSlope * ( RANGE - fullStats.mx) + fullStats.my;
+  const fullLineP1 = toScreen3D(-RANGE, 0, fullY1, yaw, pitch);
+  const fullLineP2 = toScreen3D( RANGE, 0, fullY2, yaw, pitch);
+
+  const sliceYVal1 = sliceSlope * (-RANGE - sliceStats.mx) + sliceStats.my;
+  const sliceYVal2 = sliceSlope * ( RANGE - sliceStats.mx) + sliceStats.my;
+  const sliceLineP1 = toScreen3D(-RANGE, m0, sliceYVal1, yaw, pitch);
+  const sliceLineP2 = toScreen3D( RANGE, m0, sliceYVal2, yaw, pitch);
+
+  return (
+    <svg
+      viewBox={`0 0 ${W3} ${H3}`}
+      style={{ width: '100%', maxWidth: 560, display: 'block', margin: '0 auto' }}
+      role="img"
+      aria-label="3D scatter of the chain X to M to Y with a slicing plane on M."
+    >
+      <polygon
+        points={sliceCorners.map((c) => `${c.sx},${c.sy}`).join(' ')}
+        fill="#b03a2e" fillOpacity={0.1}
+        stroke="#b03a2e" strokeWidth={1.2} strokeOpacity={0.55}
+        strokeDasharray="5,3"
+      />
+
+      <line x1={fullLineP1.sx} y1={fullLineP1.sy} x2={fullLineP2.sx} y2={fullLineP2.sy}
+        stroke="#666" strokeWidth={1.4} strokeDasharray="6,4" />
+      <line x1={sliceLineP1.sx} y1={sliceLineP1.sy} x2={sliceLineP2.sx} y2={sliceLineP2.sy}
+        stroke="#b03a2e" strokeWidth={2} />
+
+      <line x1={axisXNeg.sx} y1={axisXNeg.sy} x2={axisX.sx} y2={axisX.sy}
+        stroke="#1a1a1a" strokeOpacity={0.32} strokeWidth={0.7} />
+      <line x1={axisMNeg.sx} y1={axisMNeg.sy} x2={axisM.sx} y2={axisM.sy}
+        stroke="#1a1a1a" strokeOpacity={0.32} strokeWidth={0.7} />
+      <line x1={axisYNeg.sx} y1={axisYNeg.sy} x2={axisY.sx} y2={axisY.sy}
+        stroke="#1a1a1a" strokeOpacity={0.32} strokeWidth={0.7} />
+
+      <text x={axisX.sx + 6} y={axisX.sy + 4}
+        fontSize={12} fontStyle="italic" fontWeight={600}
+        fill="#1a1a1a" fontFamily="Inter, system-ui, sans-serif">X</text>
+      <text x={axisM.sx + 6} y={axisM.sy + 4}
+        fontSize={12} fontStyle="italic" fontWeight={600}
+        fill="#1a1a1a" fontFamily="Inter, system-ui, sans-serif">M</text>
+      <text x={axisY.sx + 6} y={axisY.sy + 4}
+        fontSize={12} fontStyle="italic" fontWeight={600}
+        fill="#1a1a1a" fontFamily="Inter, system-ui, sans-serif">Y</text>
+
+      {all.map((d, i) => {
+        const t = Math.max(0, Math.min(1, (d.depth + RANGE) / (2 * RANGE)));
+        const lightness = 18 + t * 60;
+        const size = 2.4 - t * 1.2;
+        return (
+          <circle
+            key={i}
+            cx={d.sx} cy={d.sy}
+            r={d.inSlice ? 2.6 : size}
+            fill={d.inSlice ? '#b03a2e' : `hsl(0, 0%, ${lightness}%)`}
+            opacity={d.inSlice ? 0.92 : Math.max(0.45, 1 - t * 0.4)}
+          />
+        );
+      })}
+    </svg>
   );
 }
