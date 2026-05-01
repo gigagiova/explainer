@@ -264,9 +264,7 @@ export default function ChainSliceScatter() {
         fontFamily: 'var(--font-sans)',
         fontSize: '.85rem',
         color: 'var(--ink-muted)',
-        textAlign: 'center',
-        margin: '0 auto 1rem',
-        maxWidth: 480,
+        margin: '0 0 1rem',
         lineHeight: 1.55,
       }}>
         Each dot is one athlete: practice (<i>X</i>) on the horizontal
@@ -441,6 +439,43 @@ export default function ChainSliceScatter() {
         />
       )}
 
+      <label style={{
+        display: 'block',
+        margin: '.6rem auto 0',
+        maxWidth: 460,
+        fontFamily: 'var(--font-sans)',
+        fontSize: '.78rem',
+        textTransform: 'uppercase',
+        letterSpacing: '.06em',
+        color: 'var(--ink-muted)',
+      }}>
+        skill near{' '}
+        <strong style={{
+          color: 'var(--ink)', fontFamily: 'var(--font-mono)', fontSize: '.85rem', textTransform: 'none',
+        }}>{m0.toFixed(2)}</strong>
+        <input
+          type="range" min={-2} max={2} step={0.05}
+          value={m0}
+          onChange={(e) => setM0(parseFloat((e.target as HTMLInputElement).value))}
+          style={{ display: 'block', width: '100%', marginTop: '.3rem', accentColor: 'var(--accent)' }}
+        />
+      </label>
+
+      {view === '3d' && (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '.4rem 1rem',
+          margin: '.6rem auto 0',
+          maxWidth: 460,
+        }}>
+          <RotationSlider label="yaw" value={yaw} min={-Math.PI} max={Math.PI}
+            onChange={setYaw} fmt={(v) => `${Math.round(v * 180 / Math.PI)}°`} />
+          <RotationSlider label="pitch" value={pitch} min={-Math.PI / 2} max={Math.PI / 2}
+            onChange={setPitch} fmt={(v) => `${Math.round(v * 180 / Math.PI)}°`} />
+        </div>
+      )}
+
       <div style={{
         margin: '1.2rem auto .4rem',
         maxWidth: 540,
@@ -505,43 +540,6 @@ export default function ChainSliceScatter() {
           />
         </div>
       </div>
-
-      <label style={{
-        display: 'block',
-        margin: '.6rem auto 0',
-        maxWidth: 460,
-        fontFamily: 'var(--font-sans)',
-        fontSize: '.78rem',
-        textTransform: 'uppercase',
-        letterSpacing: '.06em',
-        color: 'var(--ink-muted)',
-      }}>
-        skill near{' '}
-        <strong style={{
-          color: 'var(--ink)', fontFamily: 'var(--font-mono)', fontSize: '.85rem', textTransform: 'none',
-        }}>{m0.toFixed(2)}</strong>
-        <input
-          type="range" min={-2} max={2} step={0.05}
-          value={m0}
-          onChange={(e) => setM0(parseFloat((e.target as HTMLInputElement).value))}
-          style={{ display: 'block', width: '100%', marginTop: '.3rem', accentColor: 'var(--accent)' }}
-        />
-      </label>
-
-      {view === '3d' && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '.4rem 1rem',
-          margin: '.6rem auto 0',
-          maxWidth: 460,
-        }}>
-          <RotationSlider label="yaw" value={yaw} min={-Math.PI} max={Math.PI}
-            onChange={setYaw} fmt={(v) => `${Math.round(v * 180 / Math.PI)}°`} />
-          <RotationSlider label="pitch" value={pitch} min={-Math.PI / 2} max={Math.PI / 2}
-            onChange={setPitch} fmt={(v) => `${Math.round(v * 180 / Math.PI)}°`} />
-        </div>
-      )}
 
       <figcaption style={{
         fontFamily: 'var(--font-sans)',
