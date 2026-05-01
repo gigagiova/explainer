@@ -12,7 +12,7 @@ const { Content } = await entry.render();
 
 const sectionRef = entry.data.section;
 const sectionEntry = await getEntry(sectionRef);
-const sectionId = sectionRef.id;
+const sectionId = (sectionEntry as any)?.slug ?? (sectionEntry as any)?.id?.replace(/\.[^/.]+$/, '') ?? '';
 const sectionTitle = sectionEntry?.data.title ?? sectionId;
 ---
 <ArticleLayout

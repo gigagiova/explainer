@@ -9,7 +9,7 @@ import rehypeKatex from 'rehype-katex';
 // the project name and adjust `site` accordingly.
 export default defineConfig({
   site: 'https://gigagiova.github.io',
-  base: '/',
+  base: '/explainer/',
   trailingSlash: 'ignore',
   integrations: [
     mdx({
