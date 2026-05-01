@@ -345,6 +345,72 @@ The minus sign is the whole story. If $Z = aX + bY$ is held fixed
 at some observed value, a high $X$ forces a low $Y$ to compensate,
 and vice versa: the constraint links the two causes negatively.
 
+### Three configurations, two distributions
+
+Step back from the arithmetic for a moment. The chain, fork, and
+collider each impose a specific causal structure on three variables,
+and each structure produces a particular joint distribution. With
+standardised, jointly Gaussian variables, that distribution is fully
+described by the $3 \times 3$ covariance matrix. Computing each one
+explicitly, in the variable order $(X, \text{middle}, Y)$:
+
+$$
+\text{chain:} \quad \begin{pmatrix} 1 & a & ab \\ a & 1 & b \\ ab & b & 1 \end{pmatrix},
+\qquad
+\text{fork:} \quad \begin{pmatrix} 1 & a & ab \\ a & 1 & b \\ ab & b & 1 \end{pmatrix}.
+$$
+
+The two matrices are identical. **The chain and the fork are
+observationally indistinguishable.** From the data alone, they
+produce the same Gaussian ellipsoid in 3D, with the same orientation
+along $(1, a, ab)$, and the same correlations in every 2D projection.
+(Toggle the chain and fork figures above into 3D at the same yaw and
+pitch; the clouds are visually the same cloud.) Whether $M$ is a
+mediator carrying the effect from $X$ to $Y$, or $C$ is a common cause
+sending effects out to both, the cloud is the same. This is the
+precise, geometric form of "correlation does not imply causation":
+multiple causal stories can leave identical observational fingerprints.
+Distinguishing them needs information that is not in the data: an
+intervention, temporal order, prior knowledge of mechanism.
+
+The collider's matrix is different:
+
+$$
+\text{collider:} \quad \begin{pmatrix} 1 & a & 0 \\ a & 1 & b \\ 0 & b & 1 \end{pmatrix}.
+$$
+
+The change is in the $(X, Y)$ corner: $ab$ in chain and fork, $0$ in
+collider. The collider's cloud is round in the $(X, Y)$ plane (no
+marginal correlation between the two parents) and picks up structure
+only when $Z$ enters. Geometrically: a flat round disk in $(X, Y)$,
+each point lifted to height $aX + bY + \varepsilon_Z$ to give a
+tilted slab whose shadow on the $(X, Y)$ floor stays round.
+**The collider is observationally distinct** from chain and fork.
+Just looking at $r(X, Y)$ in the marginal scatter is enough to rule
+it in or out.
+
+The conditioning behaviour is opposite as well. For chain or fork,
+slicing on the middle variable closes the path between $X$ and $Y$,
+so the within-slice cloud goes round. For the collider, slicing on
+$Z$ opens the path, and the within-slice cloud picks up a *negative*
+tilt that was not there marginally. The same operation that removes
+correlation in chain and fork creates it in the collider:
+
+|              | $(X, Y)$ marginal | within-slice $(X, Y)$ |
+|--------------|------------------|----------------------|
+| **Chain**    | tilted           | round                |
+| **Fork**     | tilted           | round                |
+| **Collider** | round            | tilted (negatively)  |
+
+So the three configurations split cleanly into two distributional
+families. Chain and fork share one shape, with the data unable to
+distinguish them. The collider stands apart, recognisable from its
+marginal alone but flipping the meaning of conditioning. Pearl's
+*d-separation*, which generalises this to arbitrary DAGs, is the
+rule that decides which paths between two variables are open or
+blocked under any pattern of conditioning, with the chain, fork, and
+collider behaviours above as special cases.
+
 ### What this means in practice
 
 Conditioning is what most everyday statistical work does. Including a

@@ -126,10 +126,40 @@ img, svg { max-width: 100%; height: auto; }
 .article-body > pre,
 .article-body > blockquote,
 .article-body > hr,
+.article-body > table,
 .article-body > .callout {
   max-width: var(--measure);
   margin-left: auto;
   margin-right: auto;
+}
+
+/* Editorial tables: minimal grid, subtle horizontal rules, restrained
+   padding. No zebra striping. */
+.article-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.4rem auto;
+  font-family: var(--font-sans);
+  font-size: .9rem;
+  line-height: 1.45;
+}
+.article-body th,
+.article-body td {
+  padding: .55rem .8rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--rule);
+}
+.article-body th {
+  font-weight: 600;
+  color: var(--ink-muted);
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  border-bottom: 1.5px solid var(--ink);
+}
+.article-body tr:last-child td {
+  border-bottom: 1.5px solid var(--ink);
 }
 
 /* Display math gets the full article width so long equations don't
