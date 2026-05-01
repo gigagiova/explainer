@@ -1,0 +1,376 @@
+---
+title: "Sewall Wright and the Arithmetic of Causality"
+subtitle: "How a calculation about guinea-pig pedigrees became the prototype of every formula in modern causal inference."
+section: causality
+order: 1
+summary: "Wright's path analysis derived: from counting probabilities along a pedigree to the general rule that the correlation between two variables on a DAG is a sum over open paths, plus the conditional arithmetic of colliders."
+tags: ["causal inference", "path analysis", "history of statistics"]
+---
+
+import PedigreeContrast from '../../components/PedigreeContrast.tsx';
+import IBDPathDerivation from '../../components/IBDPathDerivation.tsx';
+import ColliderDerivation from '../../components/ColliderDerivation.tsx';
+import ChainRuleDerivation from '../../components/ChainRuleDerivation.tsx';
+import AdmissionsScatter from '../../components/AdmissionsScatter.tsx';
+import ChainSliceScatter from '../../components/ChainSliceScatter.tsx';
+import ForkSliceScatter from '../../components/ForkSliceScatter.tsx';
+
+In 1915, Sewall Wright sat in a US Department of Agriculture office
+with a stack of guinea-pig pedigrees in front of him. The herd had been
+inbred for ten generations to study the effects of close mating on body
+weight, vigor, and coat color. Everyone could see the animals were
+getting smaller and stranger. Nobody had a clean way to *measure how
+inbred they were*.
+
+The reason it was hard is in the picture below. An outbred animal's
+ancestry is a clean binary tree: every great-grandparent is a distinct
+individual, and the parents share no ancestors. After only two
+generations of full-sib mating, the same diagram collapses onto a
+handful of individuals, and any single animal inherits gene copies
+along many redundant routes back to a tiny pool of founders.
+
+<PedigreeContrast />
+
+Wright's question was how to summarise that redundancy in one number.
+He called the answer the inbreeding coefficient $F$. But the *method*
+he invented to compute $F$ turned out to be much bigger than the
+question that motivated it. By 1921 he had given the method a name,
+**path analysis**, and turned it into a graphical accounting that
+converts causal questions into arithmetic. Judea Pearl, in *The Book
+of Why*, opens with this story because Wright's 1921 paper contains
+the first written form of the calculus of causation. This piece is
+about that calculus, with $F$ kept as the historical scaffold rather
+than the destination.
+
+## What we are after
+
+Two variables are *related* when they are not independent: knowing
+the value of one tells you something about the value of the other.
+Without relations, every measurement would leave us exactly as
+ignorant about everything else as we were before; observation could
+carry no information, and action would have no foreseeable
+consequence. Relations are the substance of every non-trivial
+question we can ask about a system.
+
+Two flavours of relation will run through this piece, and they are
+not the same.
+
+**Causal** relations are the ones we'd like to act on: tweak $X$ and
+$Y$ moves with it. Picking a treatment, setting a price, breeding a
+guinea-pig, any goal-directed action presupposes that the world
+contains stable answers to *"if I do $X$, what will $Y$ do?"*
+**Observational** relations are the ones we can actually see in
+data. We watch a system, write down a lot of value pairs, and
+notice that some configurations occur together more often than
+others. The cleanest one-number summary of a linear observational
+relation is the *correlation* $r_{XY}$, the tilt of the joint cloud
+of $(X, Y)$ pairs once both variables are put on a common scale.
+
+We care about correlations specifically because they are the form
+of evidence that passive observation gives us. We cannot see a
+"cause" directly; we can only see what tends to occur with what. So
+if we want to reason about causes from data, and we usually do
+because data is all we have, we have to know what correlations a
+given causal structure would produce. *That* is what Wright's path
+rule gives us. Different causal stories can leave identical
+observational fingerprints (the bedrock under "correlation does not
+imply causation"), but the forward direction is exact: given the
+causes and their strengths, the rule predicts the correlations
+precisely.
+
+The rest of this piece derives that forward dictionary, starting
+with a calculation about inbred guinea-pigs.
+
+## A counting trick on a pedigree
+
+Define the **inbreeding coefficient** $F_O$ of an animal $O$ as the
+probability that $O$'s two gene copies at a randomly chosen locus are
+physical descendants of one and the same gene copy in some ancestor
+shared by $O$'s two parents $X$ and $Y$. When that happens we say $O$
+is *identical by descent* (IBD) at that locus, and $F_O$ is the IBD
+probability.
+
+Take the simplest non-trivial setup: $X$ and $Y$ share exactly one
+common ancestor $A$. Like every diploid individual, $A$ carries two
+gene copies at this locus, one inherited from each of $A$'s parents.
+Label them **copy 1** and **copy 2**. Assume the two copies are
+physically distinct genes: $A$'s own parents shared no ancestor who
+passed the same gene down to both of them. In genetics that
+assumption has a name, *$A$ is outbred at this locus*. It is what
+lets us treat copy 1 and copy 2 as two genuinely different things to
+keep track of.
+
+Step through the derivation:
+
+<IBDPathDerivation client:load />
+
+That is the contribution to $F_O$ from one shared ancestor. If $X$ and
+$Y$ share several common ancestors, each contributes its own term by
+the same argument, and the contributions add. The structural insight
+is the useful part: *the answer factorises as a product of independent
+steps along a path in the graph, summed over paths.*
+
+That structure does not depend on the steps being gene transmissions,
+or on the probability being $1/2$. It depends only on the path itself
+and on each step contributing a multiplicative factor.
+
+The bridge back to correlations is direct. $F$ itself is a correlation:
+treat the two gene copies in $O$ as random variables and $F$ is
+exactly the correlation between them. The $1/2$ per meiosis is the
+path coefficient on the gene-transmission arrow. So the IBD
+calculation we just stepped through is the path rule applied to one
+specific tiny graph, with correlations standing in for probabilities.
+What "What we are after" promised, the IBD case has already delivered;
+the next section just generalises it. Wright noticed this between
+1918 and 1921 and made the leap.
+
+## The general rule
+
+The trick that worked for inbreeding works much more widely. The "$1/2$
+per meiosis" was specific to gene transmission, but the picture
+underneath, *trace a path from one thing to another, multiply a small
+number at each step, and add up the products when several paths
+exist*, was not. The same picture governs how strongly any two
+quantities in a chain of cause and effect are related, whatever the
+quantities are. Step through the derivation, starting from a tiny
+two-step chain.
+
+<ChainRuleDerivation client:load />
+
+Time to put names on what the stepper just showed. The graph itself is
+called a **directed acyclic graph**, or *DAG*: a network of arrows
+running from causes to effects, with no cycles allowed. We say each
+variable is **standardised** when we put it on a common scale, mean $0$
+and variance $1$, so that the numbers on the arrows are directly
+comparable. With those conventions, every variable in the graph is a
+linear function of its parents, plus an independent piece of noise:
+
+$$
+V \;=\; \sum_{U \to V} c_{UV}\, U \,+\, \varepsilon_V,
+$$
+
+The numbers $c_{UV}$ on the arrows are the **path coefficients**, and
+the equation above is called a **structural equation**: it is a
+*causal* claim, saying the parents of $V$ are exactly what determine
+$V$'s value, with $c_{UV}$ measuring how much a one-unit change in
+$U$ moves $V$ when the other parents are held fixed. The leftover
+$\varepsilon_V$ is whatever else moves $V$, and we assume it is
+independent of every variable upstream of $V$ in the graph.
+
+The number we actually observe in data is the **correlation** $r_{XY}$,
+the tilt of the joint cloud the stepper showed. Wright's rule is the
+dictionary that translates between causes (the path coefficients on
+the arrows) and observations (the correlations between variables):
+feed in causes, get out correlations.
+
+<div className="callout">
+**Wright's path rule.** For any two variables $X$ and $Y$ in the graph,
+
+$$
+r_{XY} \;=\; \sum_{p \,:\, \text{open}} \;\prod_{e \in p} c_e.
+$$
+
+A path is *open* if it does not pass through a *collider*, a node where
+two arrowheads meet ($\to V \leftarrow$). Otherwise the path is
+*blocked*.
+</div>
+
+### Does the dictionary work both ways?
+
+Forward, yes: given a DAG and its path coefficients, the rule predicts
+$r_{XY}$ exactly. Backward, recovering causes from correlations alone,
+is harder and *not always possible*. Different DAGs can imply the same
+set of correlations. The chain $X \to M \to Y$, the reverse chain
+$Y \to M \to X$, and the fork $X \leftarrow M \to Y$ all produce the
+same correlation pattern between the three variables: each pair is
+correlated, with the same products of path coefficients. Observational
+data alone cannot tell them apart.
+
+To break the tie you need either an *intervention* (a randomised
+experiment that severs one of the arrows by setting a variable from
+the outside) or *auxiliary structural assumptions* (temporal order,
+known mechanism, an instrument, prior knowledge that some arrow is
+absent). This asymmetry is why "correlation does not imply causation"
+is true as a slogan: the same statistical signature can be produced by
+multiple distinct causal stories, and you need information from
+*outside* the correlation table to choose. Wright's rule is exact in
+the forward direction, and Pearl's work, sixty years later, is largely
+about pinning down which causal questions the inverse direction can
+and cannot answer.
+
+## Four diagrams
+
+Four configurations exhaust the local structure of any DAG.
+
+**Chain $X \to M \to Y$.** One open path, contribution $a \cdot b$.
+Causation flows from $X$ through $M$ to $Y$ and the correlation is the
+product of the two effects.
+
+**Fork $X \leftarrow C \to Y$.** $X$ and $Y$ have no causal relation;
+$C$ is a common cause. The path $X \leftarrow C \to Y$ is open (no
+collider), contribution $a \cdot b$. This is *spurious correlation*:
+ice-cream sales and drowning rates correlate through summer
+temperature, not through any direct effect of one on the other.
+
+**Direct plus mediated $X \to Y$ and $X \to M \to Y$.** Two open
+paths. Contributions $c$ (direct) and $a \cdot b$ (indirect). Total
+$r_{XY} = c + ab$. Wright introduced this decomposition to estimate
+the relative magnitude of the direct effect and the indirect channel,
+which is what mediation analysis still does.
+
+**Collider $X \to Z \leftarrow Y$.** $X$ and $Y$ are independent. The
+only path between them, $X \to Z \leftarrow Y$, has two arrowheads
+meeting at $Z$. By the rule it is *blocked*. So $r_{XY} = 0$. Knowing
+that $X$ and $Y$ both cause $Z$ gives you no correlation between $X$
+and $Y$ themselves, which is the right answer.
+
+## The arithmetic of conditioning
+
+Wright's path rule covers the *unconditional* correlation between two
+variables. What happens when we restrict our attention to a subset of
+the data with a specific value of a third variable, or include that
+variable as a covariate in a regression? This is *conditioning*, and
+it does very different things depending on where the conditioned
+node sits in the DAG. In some configurations it removes a
+correlation, in others it creates one out of nothing.
+
+Three local configurations cover every case. Walk through them one
+at a time. For each, drag the path coefficients to set up the graph,
+and tick *Condition on …* to watch what happens to the $(X, Y)$
+joint cloud on the right.
+
+### Chain: $X \to M \to Y$, condition on $M$
+
+A chain. $X$ causes $M$, $M$ causes $Y$, and that is the only route
+between $X$ and $Y$. $M$, the variable through which the effect from
+$X$ flows on its way to $Y$, is called the *mediator*. Without
+conditioning, $X$ and $Y$ are correlated through the chain:
+$r(X, Y) = a \cdot b$. Now suppose we restrict attention to data
+where $M$ takes a specific value: any information that flowed from
+$X$ to $Y$ went through $M$, and with $M$ held fixed that channel is
+closed.
+
+<ChainSliceScatter client:load />
+
+The result is $r(X, Y \mid M) = 0$, whatever $a$ and $b$ are. In
+statistics this is called *controlling for the mediator*; in a
+regression, including $M$ as a covariate produces exactly the same
+collapse.
+
+### Fork: $X \leftarrow C \to Y$, condition on $C$
+
+A fork. $X$ and $Y$ have no direct effect on each other; they share
+a *common cause* $C$, also called the *confounder* in regression
+contexts. Without conditioning, $X$ and $Y$ are correlated, but the
+correlation is *spurious*: neither variable causes the other, they
+just both depend on $C$. Conditioning on $C$, fixing it to a
+specific value, removes the source of shared variation.
+
+<ForkSliceScatter client:load />
+
+The result is $r(X, Y \mid C) = 0$, whatever $a$ and $b$ are. In
+statistics this is called *controlling for the confounder*; including
+$C$ as a regression covariate produces the same collapse. It is the
+single most common adjustment in applied statistics.
+
+### Collider: $X \to Z \leftarrow Y$, condition on $Z$
+
+A collider. $X$ and $Y$ are independent and both cause $Z$. Without
+conditioning, no information flows between $X$ and $Y$: the only
+path between them, $X \to Z \leftarrow Y$, is blocked by the
+head-to-head meeting at $Z$. So $r(X, Y) = 0$.
+
+But this is the surprising case. *Conditioning on $Z$ opens the
+path*, and a correlation appears between $X$ and $Y$ out of nothing.
+This pattern shows up under another name in applied work,
+*selection bias* (or *Berkson's paradox* in its medical form), and
+it happens whenever we restrict our attention to a subset of data
+defined by a downstream variable that two upstream traits jointly
+influence.
+
+#### Admissions: smart and charm
+
+The classic example is college admissions. Imagine a college that
+admits applicants on the strength of two independent traits,
+intelligence and charm. Bright-and-charming applicants get in
+easily; dull-and-dull applicants are rejected; bright-but-dull and
+charming-but-dull applicants compete for the marginal seats. Among
+the *admitted* students, intelligence and charm are *negatively*
+correlated, even though they are independent in the applicant pool.
+Drag the threshold to watch this happen, and the weights $a$ and
+$b$ to see how the admission rule's geometry shapes the induced
+correlation.
+
+<AdmissionsScatter client:load />
+
+The applicant pool's correlation hovers around zero. The admitted
+subset's correlation is negative, and the more selective the
+threshold, the more negative it gets. The dashed line is the
+*level set* of the admission rule: every $(s, c)$ on it satisfies
+$a\,s + b\,c = t$, and its slope is $-a/b$. A point further right
+along the line has a lower charm to keep the weighted sum constant,
+which is the geometric origin of the negative correlation in the
+admitted cloud. Drag $a$ and $b$ to tilt the line, and watch the
+cloud's correlation respond: the closer $a$ and $b$ are to each
+other, the more bend the admitted subset picks up.
+
+This is the collider case playing out on real-looking data:
+admission is the collider, smart and charm both flow into it, and
+conditioning on admission opens the path between them. The same
+pattern recurs everywhere we stratify by an outcome that two
+upstream traits jointly produce:
+
+- **Hospital populations.** Two diseases independent in the general
+  public can appear negatively correlated among hospital patients,
+  because hospital admission is more likely if you have at least one
+  of them.
+- **Promoted employees.** Within a company's senior ranks, technical
+  skill and political savvy might appear anti-correlated, even if
+  the underlying workforce shows no such pattern, because both
+  routes get you promoted.
+- **Surviving treatments.** Among patients alive five years after
+  diagnosis, traits that helped them survive can look anti-correlated
+  with traits that hurt them, because making it through required
+  enough of *some* combination.
+
+The structural pattern is identical to the admissions case: two
+independent traits, a downstream variable they both influence, and
+a sample restricted by that variable. The figure made the negative
+correlation visible; the algebra below shows where its exact value
+comes from.
+
+<ColliderDerivation client:load />
+
+The minus sign is the whole story. If $Z = aX + bY$ is held fixed
+at some observed value, a high $X$ forces a low $Y$ to compensate,
+and vice versa: the constraint links the two causes negatively.
+
+### What this means in practice
+
+Conditioning is what most everyday statistical work does. Including a
+variable as a covariate in a regression is conditioning on it.
+Stratifying a study population by some characteristic is conditioning
+on it. Filtering data by an outcome (admitted, hospitalised, alive at
+follow-up, employed) is conditioning on it.
+
+That makes the collider rule operationally important. The first
+instinct is often to "control for everything we can measure", but
+controlling for a collider *introduces* spurious correlations rather
+than removing them. The careful version of "control for confounders"
+is "control for the right confounders", which means thinking about
+the causal graph before choosing the regression. Pearl's *back-door
+criterion* makes this precise: the variables you should condition on
+to estimate a causal effect of $X$ on $Y$ are exactly those that
+block all *non-causal* paths between them without opening any
+collider paths.
+
+Wright's path rule plus these conditioning rules are the
+linear-Gaussian core of modern causal inference. Pearl's
+*d-separation* generalises "open path" and "blocked path" to any
+DAG, not just linear-Gaussian ones. The *do-calculus* extends
+conditioning to *interventions*, where instead of restricting the
+data to a subset we imagine actively setting a variable. Both
+machineries sit on the foundation we have just derived: a correlation
+between two variables in a DAG decomposes into a sum of contributions
+from specific paths, and which paths count depends on the structure
+of the graph and on what we observe.

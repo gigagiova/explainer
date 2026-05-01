@@ -101,88 +101,63 @@ img, svg { max-width: 100%; height: auto; }
 
 ::selection { background: color-mix(in oklab, var(--accent) 25%, transparent); }
 
-/* ---------- Layout primitives ---------- */
-
-.site {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.site-header {
-  border-bottom: 1px solid var(--rule);
-  background: var(--paper);
-}
-.site-header__inner {
-  max-width: 72rem;
-  margin: 0 auto;
-  padding: 1.1rem 1.5rem;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 2rem;
-}
-.site-header__brand {
-  font-family: var(--font-serif);
-  font-weight: 700;
-  font-size: 1.15rem;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-  border: 0;
-}
-.site-header__brand em {
-  color: var(--accent);
-  font-style: normal;
-}
-.site-nav {
-  display: flex;
-  gap: 1.4rem;
-  font-family: var(--font-sans);
-  font-size: .82rem;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-}
-.site-nav a {
-  color: var(--ink-muted);
-  border: 0;
-}
-.site-nav a:hover { color: var(--accent); }
-
-.site-footer {
-  margin-top: 4rem;
-  padding: 2rem 1.5rem 3rem;
-  border-top: 1px solid var(--rule);
-  font-family: var(--font-sans);
-  font-size: .85rem;
-  color: var(--ink-faint);
-  text-align: center;
-}
-
 /* ---------- Article shell ---------- */
 
 .article {
-  max-width: var(--measure);
+  max-width: var(--measure-wide);
   margin: 3rem auto 4rem;
   padding: 0 1.5rem;
 }
-.article > * { max-width: var(--measure); }
-.article > .wide,
-.article figure.wide {
-  max-width: var(--measure-wide);
-  margin-left: 50%;
-  transform: translateX(-50%);
+
+/* Header (eyebrow, h1, subtitle) stays at the narrow reading measure. */
+.article-header {
+  max-width: var(--measure);
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.eyebrow {
-  font-family: var(--font-sans);
-  font-size: .78rem;
-  text-transform: uppercase;
-  letter-spacing: .12em;
-  color: var(--accent);
-  font-weight: 600;
+/* Prose and inline math stay at the narrow reading measure. */
+.article-body > p,
+.article-body > h2,
+.article-body > h3,
+.article-body > h4,
+.article-body > ul,
+.article-body > ol,
+.article-body > pre,
+.article-body > blockquote,
+.article-body > hr,
+.article-body > .callout {
+  max-width: var(--measure);
+  margin-left: auto;
+  margin-right: auto;
 }
-.eyebrow a { color: inherit; border: 0; }
-.eyebrow a:hover { color: var(--ink); }
+
+/* Display math gets the full article width so long equations don't
+   need a scrollbar; if a formula is wider than the article, it extends
+   visibly rather than becoming horizontally scrollable. */
+.article-body > .katex-display {
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Figures and widgets get the full wide measure. */
+.article-body > figure,
+.article-body > .widget {
+  max-width: var(--measure-wide);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.back-link {
+  font-family: var(--font-sans);
+  font-size: .82rem;
+  color: var(--ink-muted);
+  border: 0;
+  display: inline-block;
+  margin-bottom: 1.4rem;
+}
+.back-link:hover { color: var(--accent); }
 
 .article-header { margin-bottom: 2.4rem; }
 .article-header h1 { margin: .35em 0 .25em; }
@@ -194,17 +169,7 @@ img, svg { max-width: 100%; height: auto; }
   line-height: 1.45;
   margin: 0;
 }
-.article-meta {
-  font-family: var(--font-sans);
-  font-size: .82rem;
-  color: var(--ink-faint);
-  margin-top: 1.2rem;
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.article-body p:first-of-type::first-letter {
+.article-body > p:first-of-type::first-letter {
   font-family: var(--font-serif);
   font-weight: 700;
   font-size: 3.6rem;
@@ -245,26 +210,9 @@ figcaption strong {
 
 /* ---------- Index pages ---------- */
 
-.cover {
-  max-width: 64rem;
-  margin: 4rem auto 3rem;
-  padding: 0 1.5rem;
-  text-align: center;
-}
-.cover h1 {
-  font-size: 3rem;
-  letter-spacing: -0.025em;
-}
-.cover p {
-  font-size: 1.15rem;
-  color: var(--ink-muted);
-  max-width: 36rem;
-  margin: 0 auto;
-}
-
 .section-grid {
   max-width: 64rem;
-  margin: 2rem auto 4rem;
+  margin: 4rem auto;
   padding: 0 1.5rem;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
@@ -327,9 +275,16 @@ figcaption strong {
 .katex { font-size: 1.05em; }
 .katex-display {
   margin: 1.6em 0;
-  overflow-x: auto;
-  overflow-y: hidden;
   padding: .25em 0;
+}
+
+/* Scale display math down on narrow viewports so it fits without
+   horizontal scrolling. The font shrinks proportionally with the
+   viewport between 600px and 360px. */
+@media (max-width: 600px) {
+  .katex-display .katex {
+    font-size: clamp(0.7em, 2.4vw, 1em);
+  }
 }
 
 /* ---------- Interactive widgets ---------- */
@@ -383,8 +338,7 @@ figcaption strong {
 @media (max-width: 640px) {
   body { font-size: 18px; }
   h1 { font-size: 2.1rem; }
-  .cover h1 { font-size: 2.3rem; }
-  .article-body p:first-of-type::first-letter {
+  .article-body > p:first-of-type::first-letter {
     font-size: 3rem;
     padding-right: .4rem;
   }

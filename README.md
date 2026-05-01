@@ -33,7 +33,6 @@ pnpm preview
    title: "Your piece title"
    subtitle: "Optional standfirst."
    section: genetics
-   pubDate: 2026-04-29
    summary: "One-paragraph summary used in listings + meta."
    order: 1
    ---

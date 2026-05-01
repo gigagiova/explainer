@@ -18,10 +18,10 @@ const pages = allPages
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const { Content } = await entry.render();
 ---
-<BaseLayout title={`${entry.data.title} — Explainer`} description={entry.data.blurb}>
+<BaseLayout title={entry.data.title}>
   <article class="article">
     <header class="article-header">
-      <p class="eyebrow"><a href={`${base}/`}>Explainer</a></p>
+      <a class="back-link" href={`${base}/`}>← Home</a>
       <h1>{entry.data.title}</h1>
       <p class="subtitle">{entry.data.blurb}</p>
     </header>

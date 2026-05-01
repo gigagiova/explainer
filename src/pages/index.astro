@@ -15,15 +15,7 @@ for (const p of pages) {
 }
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
-<BaseLayout title="Explainer — interactive derivations of mathematical ideas">
-  <section class="cover">
-    <h1>Explainer</h1>
-    <p>
-      Interactive, intuition-first derivations of mathematical and statistical ideas —
-      built one careful argument at a time.
-    </p>
-  </section>
-
+<BaseLayout title="Explainer">
   <div class="section-grid">
     {sections.map((s) => (
       <a class="section-card" href={`${base}/sections/${s.slug}`}>

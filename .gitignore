@@ -22,3 +22,6 @@ pnpm-debug.log*
 
 # Misc
 *.log
+
+# Claude Code: keep launch.json shared, exclude per-user permissions
+.claude/settings.local.json
