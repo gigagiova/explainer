@@ -538,7 +538,7 @@ export default function ChainSliceScatter() {
         }}>
           <RotationSlider label="yaw" value={yaw} min={-Math.PI} max={Math.PI}
             onChange={setYaw} fmt={(v) => `${Math.round(v * 180 / Math.PI)}°`} />
-          <RotationSlider label="pitch" value={pitch} min={-Math.PI / 2 + 0.1} max={Math.PI / 2 - 0.1}
+          <RotationSlider label="pitch" value={pitch} min={-Math.PI / 2} max={Math.PI / 2}
             onChange={setPitch} fmt={(v) => `${Math.round(v * 180 / Math.PI)}°`} />
         </div>
       )}
